@@ -1,28 +1,142 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <script src="https://portals-labs.github.io/portals-sdk/portals-sdk.js?v=10005456"></script>
-    <script>
-      function sendMessage(taskName, targetState) {
-        const message = {
-          TaskName: taskName,
-          TaskTargetState: targetState
-        };
-        PortalsSdk.sendMessageToUnity(JSON.stringify(message));
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Чат с Джейкобом Миллером</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      background: #111;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      margin: 0;
+    }
+    .phone-container {
+      background: #222;
+      border-radius: 32px;
+      box-shadow: 0 0 30px #000a;
+      width: 340px;
+      max-width: 96vw;
+      min-height: 500px;
+      padding: 36px 24px 24px 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      position: relative;
+    }
+    .header {
+      text-align: center;
+      padding-bottom: 16px;
+      color: #b5b5b5;
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: 1.6px;
+    }
+    .messages {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+    .date-label {
+      color: #888;
+      font-size: 13px;
+      margin: 0 0 3px 2px;
+      text-align: left;
+      font-weight: 500;
+    }
+    .msg.me, .msg.other {
+      max-width: 80%;
+      padding: 12px 15px;
+      border-radius: 15px;
+      font-size: 16px;
+      line-height: 1.35;
+      position: relative;
+      word-break: break-word;
+    }
+    .msg.me {
+      background: #393e54;
+      color: #fafafa;
+      align-self: flex-end;
+      border-bottom-right-radius: 2px;
+      border-bottom-left-radius: 15px;
+      border-top-right-radius: 15px;
+      border-top-left-radius: 15px;
+    }
+    .msg.other {
+      background: #e6e6f9;
+      color: #222;
+      align-self: flex-start;
+      border-bottom-left-radius: 2px;
+      border-bottom-right-radius: 15px;
+      border-top-right-radius: 15px;
+      border-top-left-radius: 15px;
+    }
+    .sender {
+      font-size: 13px;
+      margin-bottom: 4px;
+      color: #5f68b2;
+      font-weight: 500;
+    }
+    @media (max-width: 360px) {
+      .phone-container { padding: 20px 5px; }
+      .msg.me, .msg.other { font-size: 15px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="phone-container">
+    <div class="header">Чат с Джейкобом Миллером</div>
+    <div class="messages" id="chat">
+      <div>
+        <div class="date-label">08.10</div>
+        <div class="msg me">Пошли гулять?</div>
+      </div>
+      <div>
+        <div class="date-label">09.10</div>
+        <div class="msg me">ты обиделся или что?</div>
+      </div>
+      <div>
+        <div class="date-label">16.10</div>
+        <div class="msg me">Привет, куда пропал? Почему на связь уже неделю не выходишь?</div>
+      </div>
+    </div>
+  </div>
+  <script src="https://portals-labs.github.io/portals-sdk/portals-sdk.js?v=10005456"></script>
+  <script>
+    function addMsg(date, sender, text, isOther = true) {
+      const chat = document.getElementById('chat');
+      const wrap = document.createElement('div');
+      if (date) {
+        const label = document.createElement('div');
+        label.className = 'date-label';
+        label.innerText = date;
+        wrap.appendChild(label);
       }
-
-      window.onload = () => {
-        sendMessage("my-task", "SetActiveToCompleted");
-      };
-
-      function closeIframe() {
-        PortalsSdk.closeIframe();
+      const msg = document.createElement('div');
+      msg.className = isOther ? 'msg other' : 'msg me';
+      if (sender) {
+        const senderElem = document.createElement('div');
+        senderElem.className = 'sender';
+        senderElem.innerText = sender;
+        msg.appendChild(senderElem);
       }
-    </script>
-  </head>
-  <body>
-    <h1>Welcome to the Task Page</h1>
-    <button onclick="sendMessage('my-task', 'SetActiveToCompleted')">Complete Task</button>
-    <button onclick="closeIframe()">Close</button>
-  </body>
+      msg.innerHTML += text;
+      wrap.appendChild(msg);
+      chat.appendChild(wrap);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    setTimeout(() => {
+      addMsg('Сегодня в 22:00', 'Джейкоб Миллер:', 'Не спишь?');
+      setTimeout(() => {
+        addMsg('Сегодня в 22:00', 'Джейкоб Миллер:', 'Приходи сегодня ко мне.');
+      }, 2000);
+    }, 1000);
+  </script>
+</body>
 </html>
