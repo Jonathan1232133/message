@@ -31,7 +31,6 @@
       display:flex; align-items:center; justify-content:center;
       padding:24px;
     }
-
     .phone-wrap{
       position:relative;
       width:380px; max-width:96vw;
@@ -66,7 +65,6 @@
       width:48px; height:6px; background:#0a0c10; border-radius:6px;
       box-shadow: inset 0 0 0 2px #0f1116, 0 0 6px rgba(0,0,0,.4);
     }
-
     .phone{
       position:relative; inset:0;
       background:linear-gradient(180deg, #161820, #14161b);
@@ -75,7 +73,6 @@
       overflow:hidden;
       border:1px solid rgba(255,255,255,.05);
     }
-
     .header{
       display:flex; align-items:center; justify-content:center;
       gap:8px; padding:14px 16px 12px;
@@ -91,7 +88,6 @@
       position:absolute; right:12px; top:50%; transform:translateY(-50%);
       font-size:12px; color:var(--muted);
     }
-
     .chat{
       flex:1; overflow:auto; padding:14px 14px 6px;
       display:flex; flex-direction:column; gap:10px;
@@ -105,7 +101,6 @@
       backdrop-filter: blur(6px);
     }
     .row{ display:flex; flex-direction:column; gap:6px; }
-
     .bubble{
       max-width:78%;
       padding:10px 12px;
@@ -119,17 +114,10 @@
       border-bottom-right-radius:6px; }
     .other{ align-self:flex-start; background:var(--other); color:#1c1f2a;
       border-bottom-left-radius:6px; }
-
     @keyframes pop-in{
       to { opacity:1; transform:translateY(0) scale(1); }
     }
-
-    .sender{
-      font-size:12px; color:#5f68b2; font-weight:600;
-      margin-bottom:2px; margin-left:6px;
-      opacity:.9;
-    }
-
+    .sender{display:none;}
     .typing{
       display:flex; align-items:center; gap:8px;
       align-self:flex-start;
@@ -151,12 +139,10 @@
     }
     .dot:nth-child(2){ animation-delay:120ms; }
     .dot:nth-child(3){ animation-delay:240ms; }
-
     @keyframes blink{
       0%, 60%, 100% { transform:translateY(0); opacity:.4; }
       30% { transform:translateY(-3px); opacity:1; }
     }
-
     .input{
       display:flex; align-items:center; gap:8px;
       padding:10px 12px;
@@ -167,6 +153,15 @@
       flex:1; padding:10px 12px; border-radius:14px;
       background:#0f1117; color:#cfd3dc; border:1px solid rgba(255,255,255,.06);
       font-size:14.5px; outline:none;
+      min-height: 22px; /* всегда показывает caret, даже если поле пустое! */
+      caret-color: #cfd3dc;
+      transition:background 0.2s;
+    }
+    .field[contenteditable="false"]{
+      color: #888;
+      background:#0f1117;
+      cursor: default;
+      caret-color: transparent !important;
     }
     .btn{
       background:var(--accent); color:white; border:none;
@@ -175,13 +170,11 @@
     }
     .btn:active{ transform:translateY(1px); }
     .btn:hover{ filter:brightness(1.05); }
-
     .chat::-webkit-scrollbar{ width:10px }
     .chat::-webkit-scrollbar-thumb{
       background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.02));
       border-radius:999px;
     }
-
     @media (max-width:400px){
       .phone-wrap{ width:360px }
       .bubble{ max-width:82% }
@@ -199,19 +192,15 @@
         <div class="title">Чат с Джейкобом Миллером</div>
         <div class="status" id="status">в сети</div>
       </div>
-      <div class="chat" id="chat" role="log" aria-live="polite">
+      <div class="chat" id="chat">
         <div class="date">08.10</div>
-        <div class="row">
-          <div class="bubble me" style="animation-delay:.02s">Пошли гулять?</div>
-        </div>
+        <div class="row"><div class="bubble me">Пошли гулять?</div></div>
         <div class="date">09.10</div>
-        <div class="row">
-          <div class="bubble me" style="animation-delay:.02s">ты обиделся или что?</div>
-        </div>
+        <div class="row"><div class="bubble me">Я теперь в чёрном списке?</div></div>
         <div class="date">16.10</div>
-        <div class="row">
-          <div class="bubble me" style="animation-delay:.02s">Привет, куда пропал? Почему на связь уже неделю не выходишь?</div>
-        </div>
+        <div class="row"><div class="bubble me">Эй, ты совсем исчез? Неделю ни слуху ни духу</div></div>
+        <div class="date">Сегодня в 22:00</div>
+        <div class="row"><div class="bubble other">Привет, не спишь?</div></div>
       </div>
       <div class="input" aria-hidden="true">
         <div class="field" contenteditable="false" role="textbox" aria-label="Поле ввода (демо)">Сообщение…</div>
@@ -219,56 +208,44 @@
       </div>
     </div>
   </div>
-
-  <audio id="snd-type" preload="auto">
-    <source src="data:audio/mp3;base64,//uQZAAAAAAAAAAAAAAAAAAAA...AAA" type="audio/mp3">
-  </audio>
-  <audio id="snd-in" preload="auto">
-    <source src="data:audio/mp3;base64,//uQZAAAAAAAAAAAAAAAAAAAA...AAA" type="audio/mp3">
-  </audio>
-
+  <audio id="notification" src="notification.mp3" preload="auto"></audio>
+  <audio id="type" src="type.mp3" preload="auto"></audio>
   <script>
     const chat = document.getElementById('chat');
     const statusEl = document.getElementById('status');
-    const sndType = document.getElementById('snd-type');
-    const sndIn = document.getElementById('snd-in');
+    const notification = document.getElementById('notification');
+    const typeAudio = document.getElementById('type');
     const inputDiv = document.querySelector('.input');
-    const field = inputDiv.querySelector('.field');
+    let field = inputDiv.querySelector('.field');
     const btn = inputDiv.querySelector('.btn');
 
-    function scrollToBottom(){
-      chat.scrollTop = chat.scrollHeight;
+    function scrollToBottom(){ chat.scrollTop = chat.scrollHeight; }
+    function playNotification(){
+      try { notification.currentTime = 0; notification.volume = .7; notification.play().catch(()=>{});} catch(e){}
     }
-    function addTyping(name="Джейкоб печатает"){
+    function playType(){
+      try { typeAudio.currentTime = 0; typeAudio.volume = .5; typeAudio.play().catch(()=>{});} catch(e){}
+    }
+    function addTyping(){
       statusEl.textContent = "печатает…";
       const row = document.createElement('div');
       row.className = 'row';
-      row.dataset.typing = '1';
       const typing = document.createElement('div');
       typing.className = 'typing';
-      typing.setAttribute('aria-label', name);
-      const label = document.createElement('div');
-      label.className = 'sender';
-      label.textContent = 'Джейкоб Миллер';
-      label.style.marginLeft = '2px';
       const dots = document.createElement('div');
       dots.className = 'dots';
       dots.innerHTML = '<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
       typing.appendChild(dots);
-      row.appendChild(label);
       row.appendChild(typing);
       chat.appendChild(row);
       scrollToBottom();
-      try { sndType.currentTime = 0; sndType.volume = .25; sndType.play().catch(()=>{}); } catch(e){}
       return row;
     }
     function removeTyping(row){
-      if(row && row.parentNode){
-        row.parentNode.removeChild(row);
-      }
+      if(row && row.parentNode){ row.parentNode.removeChild(row); }
       statusEl.textContent = "в сети";
     }
-    function addMessage({date=null, sender=null, text="", side='other', delay=0}){
+    function addMessage({date=null, text="", side='other', delay=0}){
       return new Promise(resolve=>{
         setTimeout(()=>{
           if(date){
@@ -279,112 +256,90 @@
           }
           const wrap = document.createElement('div');
           wrap.className = 'row';
-          if(sender){
-            const s = document.createElement('div');
-            s.className = 'sender';
-            s.textContent = sender;
-            wrap.appendChild(s);
-          }
           const b = document.createElement('div');
           b.className = 'bubble ' + (side === 'me' ? 'me' : 'other');
           b.textContent = text;
           wrap.appendChild(b);
           chat.appendChild(wrap);
-          try { sndIn.currentTime = 0; sndIn.volume = .5; sndIn.play().catch(()=>{}); } catch(e){}
+          playNotification();
           scrollToBottom();
           resolve();
         }, delay);
       });
     }
-    function simulate(){
-      // Старая переписка и сценарий новых сообщений
-      setTimeout(()=>{
-        const typingRow = addTyping();
-        setTimeout(async ()=>{
-          removeTyping(typingRow);
-          await addMessage({
-            date:'Сегодня в 22:00',
-            sender:'Джейкоб Миллер',
-            text:'Пишешь ночью?',
-            side:'other',
-            delay:100
-          });
-          setTimeout(()=>{
-            const t2 = addTyping();
-            setTimeout(async ()=>{
-              removeTyping(t2);
-              await addMessage({
-                date:'Сегодня в 22:00',
-                sender:'Джейкоб Миллер',
-                text:'Заходи, если хочешь.',
-                side:'other',
-                delay:120
-              });
-              setTimeout(addLateNightSequence, 600);
-            }, 1200);
-          }, 600);
-        }, 1000);
-      }, 800);
-    }
 
-    function addLateNightSequence() {
-      addMessage({
-        date: 'Сегодня в 22:01',
-        sender: 'Я',
-        text: 'Почему так поздно?',
-        side: 'me',
-        delay: 200
-      }).then(() => {
-        const typingRow = addTyping();
-        setTimeout(() => {
-          removeTyping(typingRow);
-          addMessage({
-            date: 'Сегодня в 22:01',
-            sender: 'Джейкоб Миллер',
-            text: 'У меня получилось выбраться только сейчас.',
-            side: 'other',
-            delay: 120
-          }).then(showCustomInput);
-        }, 1000);
-      });
-    }
-
-    function showCustomInput() {
-      // Включить ввод пользователю
-      inputDiv.setAttribute('aria-hidden', 'false');
-      field.contentEditable = "true";
-      field.textContent = "";
-      btn.disabled = false;
-      let forcedText = "Я рядом, сейчас зайду...";
-      let sent = false;
-
-      // Всякий ввод клавишами разрешён (имитируется набор)
-      field.focus();
-      // Можно добавить эффект набора (звук)
-      field.addEventListener('input', () => {
-        try { sndType.currentTime = 0; sndType.volume = .16; sndType.play().catch(()=>{}); } catch(e){}
-      });
-
-      btn.onclick = () => {
-        if (sent) return;
-        sent = true;
-        addMessage({
-          date: 'Сегодня в 22:01',
-          sender: 'Я',
-          text: forcedText,
-          side: 'me',
-          delay: 100
-        });
-        // Блокировать поле
-        field.contentEditable = "false";
-        field.textContent = "Сообщение…";
-        btn.disabled = true;
-      };
+    function setFieldEditable(state, text) {
+      field.contentEditable = state ? "true" : "false";
+      field.textContent = text || (state ? "" : "Сообщение…");
+      if(state) setTimeout(()=>field.focus(),10);
     }
 
     window.addEventListener('load', ()=>{
-      simulate();
+      setTimeout(async ()=>{
+        const typing1 = addTyping();
+        setTimeout(async ()=>{
+          removeTyping(typing1);
+          await addMessage({
+            date:'Сегодня в 22:00',
+            text:'Загляни ко мне сегодня, если получится.',
+            side:'other',
+            delay:120
+          });
+          showTypeSequence("Ну и где ты пропадал?", 'Сегодня в 22:01', proceedJacobReply);
+        }, 3000);
+      }, 1000);
     });
+
+    function showTypeSequence(phrase, printDate, callback){
+      setFieldEditable(true,"");
+      btn.disabled = false;
+      let progress = 0;
+      let sent = false;
+
+      function keyHandler(e){
+        if(sent) return;
+        e.preventDefault();
+        if(progress < phrase.length){
+          field.textContent += phrase[progress];
+          playType();
+          progress++;
+        }
+        if(progress === phrase.length && !sent){
+          setTimeout(finishMessage, 700);
+        }
+      }
+      field.onkeydown = keyHandler;
+      btn.onclick = finishMessage;
+      function finishMessage(){
+        if(sent) return;
+        sent = true;
+        setFieldEditable(false, "Сообщение…");
+        addMessage({ date: printDate, text: phrase, side: 'me', delay: 100 });
+        field.onkeydown = null;
+        btn.onclick = null;
+        setTimeout(callback, 600);
+      }
+    }
+
+    function proceedJacobReply(){
+      const typing2 = addTyping();
+      setTimeout(async ()=>{
+        removeTyping(typing2);
+        await addMessage({
+          date:'Сегодня в 22:01',
+          text:'Так только сейчас освободился, сорри',
+          side:'other',
+          delay:120
+        });
+        showTypeSequence("Ладно, сейчас зайду, я тут недалеко", 'Сегодня в 22:01', endInput);
+      }, 1000);
+    }
+
+    function endInput(){
+      setFieldEditable(false, "Сообщение…");
+      field.onkeydown = null;
+      btn.disabled = true;
+    }
   </script>
 </body>
 </html>
