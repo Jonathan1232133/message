@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="https://portals-labs.github.io/portals-sdk/portals-sdk.js?v=10005456"></script>
+    <script>
+      function sendMessage(taskName, targetState) {
+        const message = {
+          TaskName: taskName,
+          TaskTargetState: targetState
+        };
+        PortalsSdk.sendMessageToUnity(JSON.stringify(message));
+      }
+
+      window.onload = () => {
+        sendMessage("my-task", "SetActiveToCompleted");
+      };
+
+      function closeIframe() {
+        PortalsSdk.closeIframe();
+      }
+    </script>
+  </head>
+  <body>
+    <h1>Welcome to the Task Page</h1>
+    <button onclick="sendMessage('my-task', 'SetActiveToCompleted')">Complete Task</button>
+    <button onclick="closeIframe()">Close</button>
+  </body>
+</html>
