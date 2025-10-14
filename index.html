@@ -324,8 +324,9 @@
         </div>
       </div>
     </div>
-    <audio id="notification" src="notification.mp3" preload="auto"></audio>
-    <audio id="type" src="type.mp3" preload="auto"></audio>
+  <audio id="notification" src="notification.mp3" preload="auto"></audio>
+  <audio id="type" src="type.mp3" preload="auto"></audio>
+  <audio id="send-message" src="send-message.mp3" preload="auto"></audio>
     <script>
   // Весь JS-код оставь без изменений, как в исходнике
   // (ниже код полностью идентичен вашему оригиналу)
@@ -375,6 +376,7 @@
   function scrollToBottom(){ chat.scrollTop = chat.scrollHeight; }
   function playNotification(){ try { notification.currentTime = 0; notification.volume = .7; notification.play().catch(()=>{});} catch(e){} }
   function playType(){ try { typeAudio.currentTime = 0; typeAudio.volume = .5; typeAudio.play().catch(()=>{});} catch(e){} }
+  function playSendMessage(){ try { document.getElementById('send-message').currentTime = 0; document.getElementById('send-message').volume = .7; document.getElementById('send-message').play().catch(()=>{});} catch(e){} }
   function clearChat() { while(chat.firstChild) chat.removeChild(chat.firstChild); }
   function renderBaseChat(lang) {
     clearChat();
@@ -416,7 +418,7 @@
     if(row && row.parentNode){ row.parentNode.removeChild(row); }
     statusEl.textContent = STATUS[currLang];
   }
-  function addMessage({date=null, text="", side='other', delay=0}){
+  function addMessage({date=null, text="", side='other', delay=0, noNotify=false}){
     return new Promise(resolve=>{
       setTimeout(()=>{
         const lastDate = chat.lastDate || "";
@@ -434,7 +436,7 @@
         b.textContent = text;
         wrap.appendChild(b);
         chat.appendChild(wrap);
-        playNotification();
+        if (!noNotify) playNotification();
         scrollToBottom();
         resolve();
       }, delay);
@@ -488,7 +490,8 @@
       if(sent || mySeqId !== currentSeqId) return;
       sent = true;
       setFieldEditable(false, currLang==='en' ? "Message…" : "Сообщение…");
-      addMessage({ date: printDate, text: phrase, side: 'me', delay: 100 });
+  addMessage({ date: printDate, text: phrase, side: 'me', delay: 100, noNotify: true });
+      playSendMessage();
       field.onkeydown = null;
       btn.onclick = null;
       setTimeout(callback, 600);
