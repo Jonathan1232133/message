@@ -26,6 +26,7 @@
         height: 100%;
         margin: 0;
         overflow: auto;
+        background: transparent !important; /* делаем фон прозрачным */
       }
       body {
         color: var(--text);
@@ -685,7 +686,59 @@
         setFieldEditable(false, currLang === "en" ? "Message…" : "Сообщение…");
         field.onkeydown = null;
         btn.disabled = true;
+
+        // Добавляем подсказку и кнопку закрытия после последнего сообщения
+        const hint = document.createElement("div");
+        hint.style.textAlign = "center";
+        hint.style.marginTop = "20px";
+        hint.style.fontSize = "14.5px";
+        hint.style.color = "#aeb1c4";
+        hint.style.lineHeight = "1.4";
+        hint.innerHTML =
+          currLang === "en"
+            ? "After reading the whole chat, you can close this dialogue below."
+            : "После прочтения всего чата вы можете закрыть диалог ниже.";
+
+        const closeBtn = document.createElement("button");
+        closeBtn.textContent = currLang === "en" ? "Close" : "Закрыть";
+        closeBtn.style.marginTop = "12px";
+        closeBtn.style.padding = "10px 18px";
+        closeBtn.style.border = "none";
+        closeBtn.style.borderRadius = "12px";
+        closeBtn.style.background = "var(--accent)";
+        closeBtn.style.color = "#fff";
+        closeBtn.style.fontWeight = "600";
+        closeBtn.style.cursor = "pointer";
+        closeBtn.style.transition = "filter 0.2s";
+        closeBtn.onmouseover = () =>
+          (closeBtn.style.filter = "brightness(1.1)");
+        closeBtn.onmouseout = () => (closeBtn.style.filter = "brightness(1)");
+
+        closeBtn.onclick = () => {
+          try {
+            // Попытка закрыть iframe через SDK
+            if (typeof PortalsSdk !== "undefined" && PortalsSdk.closeIframe) {
+              PortalsSdk.closeIframe();
+            } else {
+              console.warn("PortalsSdk не найден — закрываю вручную");
+              document.querySelector(".phone-wrap").style.display = "none";
+            }
+          } catch (err) {
+            console.error("Ошибка при закрытии iframe:", err);
+            document.querySelector(".phone-wrap").style.display = "none";
+          }
+        };
+
+        const container = document.createElement("div");
+        container.style.display = "flex";
+        container.style.flexDirection = "column";
+        container.style.alignItems = "center";
+        container.appendChild(hint);
+        container.appendChild(closeBtn);
+        chat.appendChild(container);
+        scrollToBottom();
       }
+
       function lockLangSwitch() {
         canSwitchLang = false;
         document.getElementById("lang-en").disabled = true;
