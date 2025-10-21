@@ -5,6 +5,7 @@
     <title>Jacob Miller Chat</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
+      /* Весь ваш CSS оставлен без изменений */
       * {
         box-sizing: border-box;
       }
@@ -381,6 +382,8 @@
         animation: blink-border 1.2s infinite;
       }
     </style>
+    <!-- Добавлено подключение скрипта Portals SDK -->
+    <script src="https://portals-labs.github.io/portals-sdk/portals-sdk.js?v=10005456"></script>
   </head>
   <body>
     <div class="layout">
@@ -412,11 +415,20 @@
     <audio id="type" src="type.mp3" preload="auto"></audio>
     <audio id="send-message" src="send-message.mp3" preload="auto"></audio>
     <script>
-      // Весь JS-код оставь без изменений, как в исходнике
-      // (ниже код полностью идентичен вашему оригиналу)
       function closeIframe() {
-        PortalsSdk.closeIframe();
+        if (typeof PortalsSdk !== "undefined" && PortalsSdk.closeIframe) {
+          PortalsSdk.closeIframe();
+        } else {
+          console.warn("PortalsSdk не найден — закрываю вручную");
+          const phoneWrap = document.querySelector(".phone-wrap");
+          if (phoneWrap) {
+            phoneWrap.style.display = "none";
+          } else {
+            console.error("Элемент .phone-wrap не найден!");
+          }
+        }
       }
+
       const CHAT_DATA = {
         ru: [
           { date: "08.10", text: "Пошли гулять?", side: "me" },
@@ -730,20 +742,7 @@
           (closeBtn.style.filter = "brightness(1.1)");
         closeBtn.onmouseout = () => (closeBtn.style.filter = "brightness(1)");
 
-        closeBtn.onclick = () => {
-          try {
-            // Попытка закрыть iframe через SDK
-            if (typeof PortalsSdk !== "undefined" && PortalsSdk.closeIframe) {
-              PortalsSdk.closeIframe();
-            } else {
-              console.warn("PortalsSdk не найден — закрываю вручную");
-              document.querySelector(".phone-wrap").style.display = "none";
-            }
-          } catch (err) {
-            console.error("Ошибка при закрытии iframe:", err);
-            document.querySelector(".phone-wrap").style.display = "none";
-          }
-        };
+        closeBtn.onclick = closeIframe;
 
         const container = document.createElement("div");
         container.style.display = "flex";
