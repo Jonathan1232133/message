@@ -1,551 +1,736 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Jacob Miller Chat</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    * { box-sizing: border-box; }
-    :root {
-      --bg:#0e0f14;
-      --phone:#181a20;
-      --phone-edge:#101218;
-      --accent:#5865f2;
-      --me:#3e4563;
-      --other:#e9e9ff;
-      --text:#e9e9ee;
-      --muted:#9aa0a6;
-      --shadow:0 20px 60px rgba(0,0,0,.55);
-      --radius:34px;
-      --trans:220ms cubic-bezier(.2,.8,.2,1);
-    }
-    html, body { 
-      height:100%; 
-      margin:0; 
-      overflow: auto;
-    }
-    body{
-      background:radial-gradient(60vmax 60vmax at 10% 20%, rgba(88,101,242,.15), transparent 55%),
-        radial-gradient(80vmax 70vmax at 90% 80%, rgba(0,195,255,.12), transparent 60%),
-        linear-gradient(180deg,#0b0c10,#0e0f14 45%, #0b0c10);
-      color:var(--text);
-      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      min-height:100vh;
-      min-width: 100vw;
-    }
-    .layout {
-      display: flex; 
-      align-items: center; 
-      justify-content: center; 
-      min-width: 550px;
-      min-height: 100vh;
-      padding: 40px 20px;
-    }
-    .phone-zone {
-      display: flex; 
-      align-items: center; 
-      justify-content: center; 
-      position:relative; 
-      min-width: 500px;
-    }
-    .phone-wrap{
-      position:relative; 
-      width: 380px;
-      height: 600px;
-      min-width: 380px;
-      min-height: 600px;
-      background:linear-gradient(180deg, var(--phone), #15171d);
-      border-radius:calc(var(--radius) + 6px);
-      box-shadow: var(--shadow); 
-      padding:12px;
-      border:1px solid rgba(255,255,255,.06); 
-      isolation:isolate;
-      margin:0; 
-      z-index:1;
-    }
-    .lang-switch-mini {
-      position:absolute;
-      top:22px;
-      right:-120px;
-      display:flex; 
-      gap:7px;
-      z-index:10;
-    }
-    .lang-btn-mini {
-      width:34px;
-      height:34px;
-      border-radius:12px;
-      border:2px solid #5968b2;
-      font-size:15px;
-      font-weight:700;
-      background:transparent;
-      color:#aeb6df;
-      cursor:pointer;
-      transition: all .16s;
-      outline:none;
-    }
-    .lang-btn-mini.active {
-      border-color:var(--accent);
-      color:var(--accent);
-      background:rgba(88,101,242,0.12);
-    }
-    .lang-btn-mini:disabled {opacity:0.5;cursor:default;}
-    .lang-btn-mini:not(.active):hover {border-color:#bdc5ee;color:#d1d4f8;}
-    .phone-edge{
-      position:absolute;
-      inset:-10px;
-      border-radius:calc(var(--radius) + 12px);
-      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.35));
-      filter:blur(14px);
-      opacity:.4;
-      z-index:-1;
-      pointer-events:none;
-    }
-    .notch{
-      position:absolute;
-      top:8px;
-      left:50%;
-      transform:translateX(-50%);
-      width:140px;
-      height:22px;
-      background:#0b0c11;
-      border-radius:0 0 16px 16px;
-      box-shadow:inset 0 -1px 0 rgba(255,255,255,.06),0 6px 12px rgba(0,0,0,.3);
-    }
-    .cam{
-      position:absolute;
-      top:16px;
-      left:calc(50% - 40px);
-      width:8px;
-      height:8px;
-      background:#0a0c10;
-      border-radius:50%;
-      box-shadow:inset 0 0 0 2px #0f1116,0 0 6px rgba(0,0,0,.6);
-    }
-    .speaker{
-      position:absolute;
-      top:16px;
-      left:50%;
-      transform:translateX(-50%);
-      width:48px;
-      height:6px;
-      background:#0a0c10;
-      border-radius:6px;
-      box-shadow:inset 0 0 0 2px #0f1116,0 0 6px rgba(0,0,0,.4);
-    }
-    .phone{
-      position:relative;
-      inset:0;
-      background:linear-gradient(180deg,#161820,#14161b);
-      border-radius:var(--radius);
-      display:flex;
-      flex-direction:column;
-      overflow:hidden;
-      border:1px solid rgba(255,255,255,.05);
-      height:100%;
-      padding-top: 0;
-    }
-    .header{
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      gap:8px;
-      padding:14px 16px 12px;
-      border-bottom:1px solid rgba(255,255,255,.06);
-      background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(0,0,0,0));
-      position:relative;
-    }
-    .title{
-      font-weight:700;
-      letter-spacing:.3px;
-      color:#d9d9e3;
-      font-size:15.5px;
-      text-align:center;
-      flex:1;
-    }
-    .status{
-      position:absolute;
-      right:12px;
-      top:50%;
-      transform:translateY(-50%);
-      font-size:12px;
-      color:var(--muted);
-    }
-    .chat{
-      flex:1;
-      overflow:auto;
-      padding:14px 14px 6px;
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-      scroll-behavior:smooth;
-      min-height:0;
-    }
-    .date{
-      align-self:center;
-      font-size:12.5px;
-      color:var(--muted);
-      padding:6px 10px;
-      border-radius:999px;
-      background:rgba(255,255,255,.06);
-      backdrop-filter:blur(6px);
-    }
-    .row{display:flex;flex-direction:column;gap:6px;}
-    .bubble{
-      max-width:78%;
-      padding:10px 12px;
-      border-radius:18px;
-      font-size:15.5px;
-      line-height:1.35;
-      box-shadow: 0 6px 18px rgba(0,0,0,.25);
-      opacity:0;
-      transform:translateY(6px) scale(.98);
-      animation:pop-in var(--trans) forwards;
-    }
-    .me{
-      align-self:flex-end;
-      background:var(--me);
-      color:#f3f4f7;
-      border-bottom-right-radius:6px;
-    }
-    .other{
-      align-self:flex-start;
-      background:var(--other);
-      color:#1c1f2a;
-      border-bottom-left-radius:6px;
-    }
-    @keyframes pop-in{to{opacity:1;transform:translateY(0) scale(1);}}
-    .sender{display:none;}
-    .typing{
-      display:flex;
-      align-items:center;
-      gap:8px;
-      align-self:flex-start;
-      background:rgba(233,233,255,.95);
-      color:#1c1f2a;
-      border-radius:18px;
-      padding:8px 12px;
-      border-bottom-left-radius:6px;
-      box-shadow:0 6px 18px rgba(0,0,0,.2);
-      opacity:0;
-      transform:translateY(6px) scale(.98);
-      animation:pop-in var(--trans) forwards;
-    }
-    .typing .dots{display:inline-flex;gap:4px;align-items:center;height:10px;}
-    .dot{
-      width:6px;
-      height:6px;
-      border-radius:50%;
-      background:#6c73c9;
-      opacity:.5;
-      transform:translateY(0);
-      animation:blink 1200ms infinite ease-in-out;
-    }
-    .dot:nth-child(2){animation-delay:120ms;}
-    .dot:nth-child(3){animation-delay:240ms;}
-    @keyframes blink{
-      0%,60%,100%{transform:translateY(0);opacity:.4;}
-      30%{transform:translateY(-3px);opacity:1;}
-    }
-    .input{
-      display:flex;
-      align-items:center;
-      gap:8px;
-      padding:10px 12px;
-      border-top:1px solid rgba(255,255,255,.06);
-      background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(0,0,0,0));
-    }
-    .field{
-      flex:1;
-      padding:10px 12px;
-      border-radius:14px;
-      background:#0f1117;
-      color:#888;
-      border:1px solid rgba(255,255,255,.06);
-      font-size:14.5px;
-      outline:none;
-      min-height:22px;
-      transition:all 0.2s;
-      user-select: none;
-    }
-    .field.active {
-      color: #cfd3dc;
-      caret-color: #cfd3dc;
-      outline: 1.5px solid var(--accent);
-      background: #181a20;
-      user-select: text;
-    }
-    .btn{
-      background:var(--accent); 
-      color:white; 
-      border:none;
-      padding:10px 12px;
-      border-radius:12px;
-      font-weight:600;
-      cursor:pointer;
-      transition:filter var(--trans),transform var(--trans);
-    }
-    .btn:disabled {
-      opacity: 0.5;
-      cursor: default;
-    }
-    .btn:not(:disabled):active{transform:translateY(1px);}
-    .btn:not(:disabled):hover{filter:brightness(1.05);}
-    .chat::-webkit-scrollbar{width:10px;}
-    .chat::-webkit-scrollbar-thumb{
-      background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.02));
-      border-radius:999px;
-    }
-  </style>
-</head>
-<body>
-<div class="layout">
-  <div class="phone-zone">
-    <div class="phone-wrap">
-      <div class="phone-edge"></div>
-      <div class="notch"></div>
-      <div class="cam"></div>
-      <div class="speaker"></div>
-      <div class="lang-switch-mini">
-        <button id="lang-en" class="lang-btn-mini active">EN</button>
-        <button id="lang-ru" class="lang-btn-mini">RU</button>
-      </div>
-      <div class="phone">
-        <div class="header">
-          <div class="title" id="chat-title">Jacob Miller</div>
-          <div class="status" id="status">online</div>
-        </div>
-        <div class="chat" id="chat"></div>
-        <div class="input">
-          <div class="field" id="field">Message…</div>
-          <button class="btn" id="send-btn" disabled>Send</button>
-        </div>
-      </div>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Jacob Miller Chat</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      :root {
+        --bg: #0e0f14;
+        --phone: #181a20;
+        --phone-edge: #101218;
+        --accent: #5865f2;
+        --me: #3e4563;
+        --other: #e9e9ff;
+        --text: #e9e9ee;
+        --muted: #9aa0a6;
+        --shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+        --radius: 34px;
+        --trans: 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+      }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        overflow: auto;
+      }
+      body {
+        background: radial-gradient(
+            60vmax 60vmax at 10% 20%,
+            rgba(88, 101, 242, 0.15),
+            transparent 55%
+          ),
+          radial-gradient(
+            80vmax 70vmax at 90% 80%,
+            rgba(0, 195, 255, 0.12),
+            transparent 60%
+          ),
+          linear-gradient(180deg, #0b0c10, #0e0f14 45%, #0b0c10);
+        color: var(--text);
+        font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial,
+          sans-serif;
+        min-height: 100vh;
+        min-width: 100vw;
+      }
+      .layout {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 550px;
+        min-height: 100vh;
+        padding: 40px 20px;
+      }
+      .phone-zone {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        min-width: 500px;
+      }
+      .phone-wrap {
+        position: relative;
+        width: 380px;
+        height: 600px;
+        min-width: 380px;
+        min-height: 600px;
+        background: linear-gradient(180deg, var(--phone), #15171d);
+        border-radius: calc(var(--radius) + 6px);
+        box-shadow: var(--shadow);
+        padding: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        isolation: isolate;
+        margin: 0;
+        z-index: 1;
+      }
+      .lang-switch-mini {
+        position: absolute;
+        top: 22px;
+        right: -120px;
+        display: flex;
+        gap: 7px;
+        z-index: 10;
+      }
+      .lang-btn-mini {
+        width: 34px;
+        height: 34px;
+        border-radius: 12px;
+        border: 2px solid #5968b2;
+        font-size: 15px;
+        font-weight: 700;
+        background: transparent;
+        color: #aeb6df;
+        cursor: pointer;
+        transition: all 0.16s;
+        outline: none;
+      }
+      .lang-btn-mini.active {
+        border-color: var(--accent);
+        color: var(--accent);
+        background: rgba(88, 101, 242, 0.12);
+      }
+      .lang-btn-mini:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
+      .lang-btn-mini:not(.active):hover {
+        border-color: #bdc5ee;
+        color: #d1d4f8;
+      }
+      .phone-edge {
+        position: absolute;
+        inset: -10px;
+        border-radius: calc(var(--radius) + 12px);
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.06),
+          rgba(0, 0, 0, 0.35)
+        );
+        filter: blur(14px);
+        opacity: 0.4;
+        z-index: -1;
+        pointer-events: none;
+      }
+      .notch {
+        position: absolute;
+        top: 8px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 140px;
+        height: 22px;
+        background: #0b0c11;
+        border-radius: 0 0 16px 16px;
+        box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.06),
+          0 6px 12px rgba(0, 0, 0, 0.3);
+      }
+      .cam {
+        position: absolute;
+        top: 16px;
+        left: calc(50% - 40px);
+        width: 8px;
+        height: 8px;
+        background: #0a0c10;
+        border-radius: 50%;
+        box-shadow: inset 0 0 0 2px #0f1116, 0 0 6px rgba(0, 0, 0, 0.6);
+      }
+      .speaker {
+        position: absolute;
+        top: 16px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 48px;
+        height: 6px;
+        background: #0a0c10;
+        border-radius: 6px;
+        box-shadow: inset 0 0 0 2px #0f1116, 0 0 6px rgba(0, 0, 0, 0.4);
+      }
+      .phone {
+        position: relative;
+        inset: 0;
+        background: linear-gradient(180deg, #161820, #14161b);
+        border-radius: var(--radius);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        height: 100%;
+        padding-top: 0;
+      }
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 14px 16px 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.04),
+          rgba(0, 0, 0, 0)
+        );
+        position: relative;
+      }
+      .title {
+        font-weight: 700;
+        letter-spacing: 0.3px;
+        color: #d9d9e3;
+        font-size: 15.5px;
+        text-align: center;
+        flex: 1;
+      }
+      .status {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .chat {
+        flex: 1;
+        overflow: auto;
+        padding: 14px 14px 6px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        scroll-behavior: smooth;
+        min-height: 0;
+      }
+      .date {
+        align-self: center;
+        font-size: 12.5px;
+        color: var(--muted);
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.06);
+        backdrop-filter: blur(6px);
+      }
+      .row {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .bubble {
+        max-width: 78%;
+        padding: 10px 12px;
+        border-radius: 18px;
+        font-size: 15.5px;
+        line-height: 1.35;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+        opacity: 0;
+        transform: translateY(6px) scale(0.98);
+        animation: pop-in var(--trans) forwards;
+      }
+      .me {
+        align-self: flex-end;
+        background: var(--me);
+        color: #f3f4f7;
+        border-bottom-right-radius: 6px;
+      }
+      .other {
+        align-self: flex-start;
+        background: var(--other);
+        color: #1c1f2a;
+        border-bottom-left-radius: 6px;
+      }
+      @keyframes pop-in {
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+      .sender {
+        display: none;
+      }
+      .typing {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        align-self: flex-start;
+        background: rgba(233, 233, 255, 0.95);
+        color: #1c1f2a;
+        border-radius: 18px;
+        padding: 8px 12px;
+        border-bottom-left-radius: 6px;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+        opacity: 0;
+        transform: translateY(6px) scale(0.98);
+        animation: pop-in var(--trans) forwards;
+      }
+      .typing .dots {
+        display: inline-flex;
+        gap: 4px;
+        align-items: center;
+        height: 10px;
+      }
+      .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #6c73c9;
+        opacity: 0.5;
+        transform: translateY(0);
+        animation: blink 1200ms infinite ease-in-out;
+      }
+      .dot:nth-child(2) {
+        animation-delay: 120ms;
+      }
+      .dot:nth-child(3) {
+        animation-delay: 240ms;
+      }
+      @keyframes blink {
+        0%,
+        60%,
+        100% {
+          transform: translateY(0);
+          opacity: 0.4;
+        }
+        30% {
+          transform: translateY(-3px);
+          opacity: 1;
+        }
+      }
+      .input {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.02),
+          rgba(0, 0, 0, 0)
+        );
+      }
+      .field {
+        flex: 1;
+        padding: 10px 12px;
+        border-radius: 14px;
+        background: #0f1117;
+        color: #888;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        font-size: 14.5px;
+        outline: none;
+        min-height: 22px;
+        transition: all 0.2s;
+        user-select: none;
+      }
+      .field.active {
+        color: #cfd3dc;
+        caret-color: #cfd3dc;
+        outline: 1.5px solid var(--accent);
+        background: #181a20;
+        user-select: text;
+      }
+      .btn {
+        background: var(--accent);
+        color: white;
+        border: none;
+        padding: 10px 12px;
+        border-radius: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: filter var(--trans), transform var(--trans);
+      }
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
+      .btn:not(:disabled):active {
+        transform: translateY(1px);
+      }
+      .btn:not(:disabled):hover {
+        filter: brightness(1.05);
+      }
+      .chat::-webkit-scrollbar {
+        width: 10px;
+      }
+      .chat::-webkit-scrollbar-thumb {
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.08),
+          rgba(255, 255, 255, 0.02)
+        );
+        border-radius: 999px;
+      }
+      @keyframes blink-border {
+        0%,
+        100% {
+          outline-color: var(--accent);
+        }
+        50% {
+          outline-color: transparent;
+        }
+      }
+      .field.blinking {
+        animation: blink-border 1.2s infinite;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="layout">
+      <div class="phone-zone">
+        <div class="phone-wrap">
+          <div class="phone-edge"></div>
+          <div class="notch"></div>
+          <div class="cam"></div>
+          <div class="speaker"></div>
+          <div class="lang-switch-mini">
+            <button id="lang-en" class="lang-btn-mini active">EN</button>
+            <button id="lang-ru" class="lang-btn-mini">RU</button>
+          </div>
+          <div class="phone">
+            <div class="header">
+              <div class="title" id="chat-title">Jacob Miller</div>
+              <div class="status" id="status">online</div>
+            </div>
+            <div class="chat" id="chat"></div>
+            <div class="input">
+              <div class="field" id="field">Message…</div>
+              <button class="btn" id="send-btn" disabled>Send</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-  <audio id="notification" src="notification.mp3" preload="auto"></audio>
-  <audio id="type" src="type.mp3" preload="auto"></audio>
-  <audio id="send-message" src="send-message.mp3" preload="auto"></audio>
+    <audio id="notification" src="notification.mp3" preload="auto"></audio>
+    <audio id="type" src="type.mp3" preload="auto"></audio>
+    <audio id="send-message" src="send-message.mp3" preload="auto"></audio>
     <script>
-  // Весь JS-код оставь без изменений, как в исходнике
-  // (ниже код полностью идентичен вашему оригиналу)
-  const CHAT_DATA = {
-    ru: [
-      {date:'08.10', text:'Пошли гулять?', side:'me'},
-      {date:'09.10', text:'Почему игноришь?', side:'me'},
-      {date:'16.10', text:'Ты там живой хоть? Неделю ни слуху ни духу', side:'me'},
-      {date:'Сегодня в 22:00', text:'Привет, не спишь?', side:'other'},
-    ],
-    en: [
-      {date:'08.10', text:'Wanna go for a walk?', side:'me'},
-      {date:'09.10', text:'Why are you ignoring me?', side:'me'},
-      {date:'16.10', text:'Are you even alive over there? Haven’t heard from you in a week', side:'me'},
-      {date:'Today at 22:00', text:'Hey, are you not sleeping right now?', side:'other'},
-    ]
-  };
-  const DYNAMIC_MSGS = {
-    ru: [
-      {date:'Сегодня в 22:00', text:'Загляни ко мне сегодня, если получится.', side:'other'},
-      {date:'Сегодня в 22:01', type:'input', text:'Ну и где ты пропадал?', side:'me'},
-      {date:'Сегодня в 22:01', text:'Ну я только сейчас освободился, сорян', side:'other'},
-      {date:'Сегодня в 22:01', type:'input', text:'Ладно, сейчас зайду, я тут недалеко', side:'me'},
-    ],
-    en: [
-      {date:'Today at 22:00', text:'Come to my home tonight if you can.', side:'other'},
-      {date:'Today at 22:01', type:'input', text:'Why have you been away so long?', side:'me'},
-      {date:'Today at 22:01', text:'Just got free now, sorry.', side:'other'},
-      {date:'Today at 22:01', type:'input', text:'Alright, I’m coming over, I’m close by.', side:'me'},
-    ]
-  };
-  const STATUS = {ru:'в сети',en:'online'};
+      // Весь JS-код оставь без изменений, как в исходнике
+      // (ниже код полностью идентичен вашему оригиналу)
+      const CHAT_DATA = {
+        ru: [
+          { date: "08.10", text: "Пошли гулять?", side: "me" },
+          { date: "09.10", text: "Почему игноришь?", side: "me" },
+          {
+            date: "16.10",
+            text: "Ты там живой хоть? Неделю ни слуху ни духу",
+            side: "me",
+          },
+          { date: "Сегодня в 22:00", text: "Привет, не спишь?", side: "other" },
+        ],
+        en: [
+          { date: "08.10", text: "Wanna go for a walk?", side: "me" },
+          { date: "09.10", text: "Why are you ignoring me?", side: "me" },
+          {
+            date: "16.10",
+            text: "Are you even alive over there? Haven’t heard from you in a week",
+            side: "me",
+          },
+          {
+            date: "Today at 22:00",
+            text: "Hey, are you not sleeping right now?",
+            side: "other",
+          },
+        ],
+      };
+      const DYNAMIC_MSGS = {
+        ru: [
+          {
+            date: "Сегодня в 22:00",
+            text: "Загляни ко мне сегодня, если получится.",
+            side: "other",
+          },
+          {
+            date: "Сегодня в 22:01",
+            type: "input",
+            text: "Ну и где ты пропадал?",
+            side: "me",
+          },
+          {
+            date: "Сегодня в 22:01",
+            text: "Ну я только сейчас освободился, сорян",
+            side: "other",
+          },
+          {
+            date: "Сегодня в 22:01",
+            type: "input",
+            text: "Ладно, сейчас зайду, я тут недалеко",
+            side: "me",
+          },
+        ],
+        en: [
+          {
+            date: "Today at 22:00",
+            text: "Come to my home tonight if you can.",
+            side: "other",
+          },
+          {
+            date: "Today at 22:01",
+            type: "input",
+            text: "Why have you been away so long?",
+            side: "me",
+          },
+          {
+            date: "Today at 22:01",
+            text: "Just got free now, sorry.",
+            side: "other",
+          },
+          {
+            date: "Today at 22:01",
+            type: "input",
+            text: "Alright, I’m coming over, I’m close by.",
+            side: "me",
+          },
+        ],
+      };
+      const STATUS = { ru: "в сети", en: "online" };
 
+      const chat = document.getElementById("chat");
+      const statusEl = document.getElementById("status");
+      const notification = document.getElementById("notification");
+      const typeAudio = document.getElementById("type");
+      const inputDiv = document.querySelector(".input");
+      let field = inputDiv.querySelector(".field");
+      const btn = inputDiv.querySelector(".btn");
+      let currLang = "en";
+      let canSwitchLang = true;
+      let currentSeqId = 0;
 
-  const chat = document.getElementById('chat');
-  const statusEl = document.getElementById('status');
-  const notification = document.getElementById('notification');
-  const typeAudio = document.getElementById('type');
-  const inputDiv = document.querySelector('.input');
-  let field = inputDiv.querySelector('.field');
-  const btn = inputDiv.querySelector('.btn');
-  let currLang = 'en';
-  let canSwitchLang = true;
-  let currentSeqId = 0;
-
-
-  function scrollToBottom(){ chat.scrollTop = chat.scrollHeight; }
-  function playNotification(){ try { notification.currentTime = 0; notification.volume = .7; notification.play().catch(()=>{});} catch(e){} }
-  function playType(){ try { typeAudio.currentTime = 0; typeAudio.volume = .5; typeAudio.play().catch(()=>{});} catch(e){} }
-  function playSendMessage(){ try { document.getElementById('send-message').currentTime = 0; document.getElementById('send-message').volume = .7; document.getElementById('send-message').play().catch(()=>{});} catch(e){} }
-  function clearChat() { while(chat.firstChild) chat.removeChild(chat.firstChild); }
-  function renderBaseChat(lang) {
-    clearChat();
-    let lastDate = '';
-    CHAT_DATA[lang].forEach(msg=>{
-      if(msg.date!==lastDate){
-        lastDate = msg.date;
-        const d = document.createElement('div');
-        d.className = 'date';
-        d.textContent = msg.date;
-        chat.appendChild(d);
+      function scrollToBottom() {
+        chat.scrollTop = chat.scrollHeight;
       }
-      const wrap = document.createElement('div');
-      wrap.className = 'row';
-      const b = document.createElement('div');
-      b.className = 'bubble ' + (msg.side === 'me' ? 'me' : 'other');
-      b.textContent = msg.text;
-      wrap.appendChild(b);
-      chat.appendChild(wrap);
-    });
-    scrollToBottom();
-  }
-  function addTyping(){
-    statusEl.textContent = STATUS[currLang];
-    const row = document.createElement('div');
-    row.className = 'row';
-    const typing = document.createElement('div');
-    typing.className = 'typing';
-    const dots = document.createElement('div');
-    dots.className = 'dots';
-    dots.innerHTML = '<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
-    typing.appendChild(dots);
-    row.appendChild(typing);
-    chat.appendChild(row);
-    scrollToBottom();
-    return row;
-  }
-  function removeTyping(row){
-    if(row && row.parentNode){ row.parentNode.removeChild(row); }
-    statusEl.textContent = STATUS[currLang];
-  }
-  function addMessage({date=null, text="", side='other', delay=0, noNotify=false}){
-    return new Promise(resolve=>{
-      setTimeout(()=>{
-        const lastDate = chat.lastDate || "";
-        if(date && (!lastDate || lastDate!==date)){
-          const d = document.createElement('div');
-          d.className = 'date';
-          d.textContent = date;
-          chat.appendChild(d);
-          chat.lastDate = date;
-        }
-        const wrap = document.createElement('div');
-        wrap.className = 'row';
-        const b = document.createElement('div');
-        b.className = 'bubble ' + (side === 'me' ? 'me' : 'other');
-        b.textContent = text;
-        wrap.appendChild(b);
-        chat.appendChild(wrap);
-        if (!noNotify) playNotification();
+      function playNotification() {
+        try {
+          notification.currentTime = 0;
+          notification.volume = 0.7;
+          notification.play().catch(() => {});
+        } catch (e) {}
+      }
+      function playType() {
+        try {
+          typeAudio.currentTime = 0;
+          typeAudio.volume = 0.5;
+          typeAudio.play().catch(() => {});
+        } catch (e) {}
+      }
+      function playSendMessage() {
+        try {
+          document.getElementById("send-message").currentTime = 0;
+          document.getElementById("send-message").volume = 0.7;
+          document
+            .getElementById("send-message")
+            .play()
+            .catch(() => {});
+        } catch (e) {}
+      }
+      function clearChat() {
+        while (chat.firstChild) chat.removeChild(chat.firstChild);
+      }
+      function renderBaseChat(lang) {
+        clearChat();
+        let lastDate = "";
+        CHAT_DATA[lang].forEach((msg) => {
+          if (msg.date !== lastDate) {
+            lastDate = msg.date;
+            const d = document.createElement("div");
+            d.className = "date";
+            d.textContent = msg.date;
+            chat.appendChild(d);
+          }
+          const wrap = document.createElement("div");
+          wrap.className = "row";
+          const b = document.createElement("div");
+          b.className = "bubble " + (msg.side === "me" ? "me" : "other");
+          b.textContent = msg.text;
+          wrap.appendChild(b);
+          chat.appendChild(wrap);
+        });
         scrollToBottom();
-        resolve();
-      }, delay);
-    });
-  }
-  function setFieldEditable(state, text) {
-    field.contentEditable = state ? "true" : "false";
-    field.textContent = text || (state ? "" : (currLang==='en' ? "Message…" : "Сообщение…"));
-    if(state) setTimeout(()=>field.focus(),10);
-  }
-  window.addEventListener('load', startSequence);
-
-
-  function startSequence(){
-    renderBaseChat(currLang);
-    const seqId = ++currentSeqId;
-    setTimeout(async ()=>{
-      if (seqId !== currentSeqId) return;
-      chat.lastDate=null;
-      const typing1 = addTyping();
-      setTimeout(async ()=>{
-        if (seqId !== currentSeqId) return;
-        removeTyping(typing1);
-        await addMessage(DYNAMIC_MSGS[currLang][0]);
-        if (seqId !== currentSeqId) return;
-        showTypeSequence(DYNAMIC_MSGS[currLang][1].text, DYNAMIC_MSGS[currLang][1].date, ()=>proceedJacobReply(seqId));
-      }, 3000);
-    }, 1000);
-  }
-  function showTypeSequence(phrase, printDate, callback){
-    setFieldEditable(true,"");
-    btn.disabled = false;
-    let progress = 0;
-    let sent = false;
-    const mySeqId = currentSeqId;
-    function keyHandler(e){
-      if(sent || mySeqId !== currentSeqId) return;
-      e.preventDefault();
-      if(progress < phrase.length){
-        field.textContent += phrase[progress];
-        playType();
-        progress++;
       }
-      if(progress === phrase.length && !sent){
-        setTimeout(finishMessage, 700);
+      function addTyping() {
+        statusEl.textContent = STATUS[currLang];
+        const row = document.createElement("div");
+        row.className = "row";
+        const typing = document.createElement("div");
+        typing.className = "typing";
+        const dots = document.createElement("div");
+        dots.className = "dots";
+        dots.innerHTML =
+          '<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
+        typing.appendChild(dots);
+        row.appendChild(typing);
+        chat.appendChild(row);
+        scrollToBottom();
+        return row;
       }
-    }
-    field.onkeydown = keyHandler;
-    btn.onclick = finishMessage;
-    function finishMessage(){
-      if(sent || mySeqId !== currentSeqId) return;
-      sent = true;
-      setFieldEditable(false, currLang==='en' ? "Message…" : "Сообщение…");
-  addMessage({ date: printDate, text: phrase, side: 'me', delay: 100, noNotify: true });
-      playSendMessage();
-      field.onkeydown = null;
-      btn.onclick = null;
-      setTimeout(callback, 600);
-    }
-  }
-  function proceedJacobReply(seqId){
-    const typing2 = addTyping();
-    setTimeout(async ()=>{
-      if (seqId !== currentSeqId) return;
-      removeTyping(typing2);
-      await addMessage(DYNAMIC_MSGS[currLang][2]);
-      if (seqId !== currentSeqId) return;
-      showTypeSequence(DYNAMIC_MSGS[currLang][3].text, DYNAMIC_MSGS[currLang][3].date, endInput);
-    }, 1000);
-  }
-  function endInput(){
-    setFieldEditable(false, currLang==='en' ? "Message…" : "Сообщение…");
-    field.onkeydown = null;
-    btn.disabled = true;
-  }
-  function lockLangSwitch() {
-    canSwitchLang = false;
-    document.getElementById('lang-en').disabled = true;
-    document.getElementById('lang-ru').disabled = true;
-    setTimeout(()=>{
-      canSwitchLang = true;
-      document.getElementById('lang-en').disabled = false;
-      document.getElementById('lang-ru').disabled = false;
-    }, 1000);
-  }
-  document.getElementById('lang-ru').onclick = function(){
-    if(currLang === 'ru' || !canSwitchLang) return;
-    currLang='ru';
-    this.classList.add('active');
-    document.getElementById('lang-en').classList.remove('active');
-    lockLangSwitch();
-    resetChat();
-  }
-  document.getElementById('lang-en').onclick = function(){
-    if(currLang === 'en' || !canSwitchLang) return;
-    currLang='en';
-    this.classList.add('active');
-    document.getElementById('lang-ru').classList.remove('active');
-    lockLangSwitch();
-    resetChat();
-  }
-  function resetChat(){
-    currentSeqId++; // Обрезаем любые старые сценарии
-    setFieldEditable(false, currLang==='en' ? "Message…" : "Сообщение…");
-    btn.disabled = true;
-    field.onkeydown = null;
-    chat.lastDate=null;
-    startSequence();
-  }
-</script>
-</body>
+      function removeTyping(row) {
+        if (row && row.parentNode) {
+          row.parentNode.removeChild(row);
+        }
+        statusEl.textContent = STATUS[currLang];
+      }
+      function addMessage({
+        date = null,
+        text = "",
+        side = "other",
+        delay = 0,
+        noNotify = false,
+      }) {
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            const lastDate = chat.lastDate || "";
+            if (date && (!lastDate || lastDate !== date)) {
+              const d = document.createElement("div");
+              d.className = "date";
+              d.textContent = date;
+              chat.appendChild(d);
+              chat.lastDate = date;
+            }
+            const wrap = document.createElement("div");
+            wrap.className = "row";
+            const b = document.createElement("div");
+            b.className = "bubble " + (side === "me" ? "me" : "other");
+            b.textContent = text;
+            wrap.appendChild(b);
+            chat.appendChild(wrap);
+            if (!noNotify) playNotification();
+            scrollToBottom();
+            resolve();
+          }, delay);
+        });
+      }
+      function setFieldEditable(state, text) {
+        field.contentEditable = state ? "true" : "false";
+        field.textContent =
+          text || (state ? "" : currLang === "en" ? "Message…" : "Сообщение…");
+        if (state) {
+          field.classList.add("active");
+          field.classList.add("blinking"); // Включаем мигание при разрешении писать
+          setTimeout(() => field.focus(), 10);
+        } else {
+          field.classList.remove("active");
+          field.classList.remove("blinking"); // Выключаем мигание, если писать нельзя
+        }
+      }
+      window.addEventListener("load", startSequence);
+
+      function startSequence() {
+        renderBaseChat(currLang);
+        const seqId = ++currentSeqId;
+        setTimeout(async () => {
+          if (seqId !== currentSeqId) return;
+          chat.lastDate = null;
+          const typing1 = addTyping();
+          setTimeout(async () => {
+            if (seqId !== currentSeqId) return;
+            removeTyping(typing1);
+            await addMessage(DYNAMIC_MSGS[currLang][0]);
+            if (seqId !== currentSeqId) return;
+            showTypeSequence(
+              DYNAMIC_MSGS[currLang][1].text,
+              DYNAMIC_MSGS[currLang][1].date,
+              () => proceedJacobReply(seqId)
+            );
+          }, 3000);
+        }, 1000);
+      }
+      function showTypeSequence(phrase, printDate, callback) {
+        setFieldEditable(true, "");
+        btn.disabled = false;
+        let progress = 0;
+        let sent = false;
+        const mySeqId = currentSeqId;
+        function keyHandler(e) {
+          if (sent || mySeqId !== currentSeqId) return;
+          e.preventDefault();
+          if (progress < phrase.length) {
+            field.textContent += phrase[progress];
+            playType();
+            progress++;
+          }
+          if (progress === phrase.length && !sent) {
+            setTimeout(finishMessage, 700);
+          }
+        }
+        field.onkeydown = keyHandler;
+        btn.onclick = finishMessage;
+        function finishMessage() {
+          if (sent || mySeqId !== currentSeqId) return;
+          sent = true;
+          setFieldEditable(
+            false,
+            currLang === "en" ? "Message…" : "Сообщение…"
+          );
+          addMessage({
+            date: printDate,
+            text: phrase,
+            side: "me",
+            delay: 100,
+            noNotify: true,
+          });
+          playSendMessage();
+          field.onkeydown = null;
+          btn.onclick = null;
+          setTimeout(callback, 600);
+        }
+      }
+      function proceedJacobReply(seqId) {
+        const typing2 = addTyping();
+        setTimeout(async () => {
+          if (seqId !== currentSeqId) return;
+          removeTyping(typing2);
+          await addMessage(DYNAMIC_MSGS[currLang][2]);
+          if (seqId !== currentSeqId) return;
+          showTypeSequence(
+            DYNAMIC_MSGS[currLang][3].text,
+            DYNAMIC_MSGS[currLang][3].date,
+            endInput
+          );
+        }, 1000);
+      }
+      function endInput() {
+        setFieldEditable(false, currLang === "en" ? "Message…" : "Сообщение…");
+        field.onkeydown = null;
+        btn.disabled = true;
+      }
+      function lockLangSwitch() {
+        canSwitchLang = false;
+        document.getElementById("lang-en").disabled = true;
+        document.getElementById("lang-ru").disabled = true;
+        setTimeout(() => {
+          canSwitchLang = true;
+          document.getElementById("lang-en").disabled = false;
+          document.getElementById("lang-ru").disabled = false;
+        }, 1000);
+      }
+      document.getElementById("lang-ru").onclick = function () {
+        if (currLang === "ru" || !canSwitchLang) return;
+        currLang = "ru";
+        this.classList.add("active");
+        document.getElementById("lang-en").classList.remove("active");
+        lockLangSwitch();
+        resetChat();
+      };
+      document.getElementById("lang-en").onclick = function () {
+        if (currLang === "en" || !canSwitchLang) return;
+        currLang = "en";
+        this.classList.add("active");
+        document.getElementById("lang-ru").classList.remove("active");
+        lockLangSwitch();
+        resetChat();
+      };
+      function resetChat() {
+        currentSeqId++; // Обрезаем любые старые сценарии
+        setFieldEditable(false, currLang === "en" ? "Message…" : "Сообщение…");
+        btn.disabled = true;
+        field.onkeydown = null;
+        chat.lastDate = null;
+        startSequence();
+      }
+    </script>
+  </body>
 </html>
